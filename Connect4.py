@@ -31,7 +31,7 @@ def draw_circle(pos,color,r=20):
 
 def add_piece(row, column, player):
     color = colorMap[player]
-    draw_circle((column * 60, row * 60), color)
+    draw_circle((int(column * 60),int(row * 60)), color)
 
 
 
@@ -42,7 +42,7 @@ def draw_board(board):
 
 def find_column(pos):
     x,y = pos
-    return round(x/60)
+    return round((x+30)/60)
 
 def find_row(column, board):
     ret = 6
@@ -100,43 +100,48 @@ def move_helper_check(board,player,column, calls):
         return 0.0
     if(check_win(state,player)):
         #print_board(state)
-        #print(player, "wins in" , calls, sep=" ")
+        print(player, " wins in " , calls)
         return (player - 1.5) * 2 / calls
     return move_helper_add(state, 3 - player , calls+1)
 
 def move_helper_add(board, player, calls):
-    if(calls > 2):
-        return -1
+    if(calls > 6):
+        return 0
     state = board.copy()
     max = -1
     min = 1
-    ret = (player - 1.5) * -2
+    ret = 0
     for col in state.columns:
         row = find_row(col,state)
         if(row > 0):
             temp = move_helper_check(state, player, col, calls)
-            if(player==2):
+            if(player==1):
                 if(temp < min):
                     min = temp
                     ret = min
+                    
             else:
                 if(temp > max):
                     max = temp
                     ret = max
+    print("least bad move for turn ", calls, "val is", ret)
     return ret
 
 def get_move(board):
     state = board.copy()
-    max = -1
+    max = -.25
     maxCol = random.randint(1,7)
+    test = maxCol
     for col in state.columns:
         row = find_row(col, state)
         if(row > 0):
             temp = move_helper_check(state, 2, col, 1)
-            print(temp, col, sep=" ")
+            print("best move for column: ",col, " is ",temp)
             if(temp > max):
                 maxCol = col
                 max = temp
+    if(max==0):
+        maxCol = test
     return maxCol
 
 
@@ -185,6 +190,7 @@ while not win:
                     pos=pygame.mouse.get_pos()
                     column = find_column(pos)
                     if column > 7: break
+                    if column < 1: break
                     row = find_row(column, board)
                     #print(column)
                     if row < 1: break
