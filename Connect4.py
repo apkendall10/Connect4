@@ -93,7 +93,7 @@ def print_board(board):
             val = val + str(board.loc[row, col]) + ","
     return val
 
-def move_helper_check(board,player,column, calls):
+def move_helper_check(board,player,column, calls, min = 1, max = -1):
     state = board.copy()
     row = find_row(column, state)
     state.loc[row,column]=player
@@ -104,28 +104,27 @@ def move_helper_check(board,player,column, calls):
         #print_board(state)
         #print(player, " wins in " , calls)
         return (player - 1.5) * 2 / calls
-    return move_helper_add(state, 3 - player , calls+1)
+    return move_helper_add(state, 3 - player , calls+1, min, max)
 
-def move_helper_add(board, player, calls):
+def move_helper_add(board, player, calls, min = 1, max = -1):
     if(calls > 5):
         return 0
     state = board.copy()
-    max = -1
-    min = 1
+    localmax = max
+    localmin = min
     ret = 0
     for col in state.columns:
         row = find_row(col,state)
         if(row > 0):
-            temp = move_helper_check(state, player, col, calls)
+            temp = move_helper_check(state, player, col, calls, localmin, localmax)
             if(player==1):
-                if(temp < min):
-                    min = temp
-                    ret = min
-                    
+                if(temp < localmin):
+                    localmin = temp
+                    ret = localmin
             else:
-                if(temp > max):
-                    max = temp
-                    ret = max
+                if(temp > localmax):
+                    localmax = temp
+                    ret = localmax
     #print("least bad move for turn ", calls, "val is", ret)
     return ret
 def get_move_minMax(baord,player):
@@ -136,7 +135,7 @@ def get_move_minMax(baord,player):
     for col in state.columns:
         row = find_row(col, state)
         if(row > 0):
-            temp = move_helper_check(state, player, col, 1)
+            temp = move_helper_check(state, player, col, 1, min, max)
             #print("best move for column: ",col, " is ",temp)
             if(player==2):
                 if(temp == max):
