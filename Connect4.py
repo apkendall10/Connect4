@@ -4,8 +4,8 @@ size = width, height = 600, 480
 white= 255,255,255
 screen = pygame.display.set_mode(size)
 file = open("gameoutput.txt","a") 
-size = 5
-win = 3
+size = 7
+win = 4
 pos=(0,0)
 blue = (100,100,200)
 red = (200,100,100)
@@ -83,7 +83,7 @@ def check_win(board,player):
                     for y in (-1,0,1):
                         dir = (x,y)
                         if(dir != (0,0)):
-                            if(check_helper(board,player, row,column, 2, dir)):
+                            if(check_helper(board,player, row,column, 3, dir)):
                                 return True
     return False
 def print_board(board):
@@ -93,7 +93,7 @@ def print_board(board):
             val = val + str(board.loc[row, col]) + ","
     return val
 
-def move_helper_check(board,player,column, calls, min = 1, max = -1):
+def move_helper_check(board,player,column, calls, alpha, beta):
     state = board.copy()
     row = find_row(column, state)
     state.loc[row,column]=player
@@ -104,38 +104,46 @@ def move_helper_check(board,player,column, calls, min = 1, max = -1):
         #print_board(state)
         #print(player, " wins in " , calls)
         return (player - 1.5) * 2 / calls
-    return move_helper_add(state, 3 - player , calls+1, min, max)
+    return move_helper_add(state, 3 - player , calls+1, alpha, beta)
 
-def move_helper_add(board, player, calls, min = 1, max = -1):
+def move_helper_add(board, player, calls, alpha, beta):
     if(calls > 5):
         return 0
     state = board.copy()
-    localmax = max
-    localmin = min
+    maxi = -1
+    mini = 1
     ret = 0
     for col in state.columns:
         row = find_row(col,state)
         if(row > 0):
-            temp = move_helper_check(state, player, col, calls, localmin, localmax)
+            temp = move_helper_check(state, player, col, calls, alpha, beta)
             if(player==1):
-                if(temp < localmin):
-                    localmin = temp
-                    ret = localmin
+                if(temp < mini):
+                    mini = temp
+                    ret = mini
+                    beta = min(beta,mini)
+                if(temp < alpha):
+                    return temp
             else:
-                if(temp > localmax):
-                    localmax = temp
-                    ret = localmax
+                if(temp > maxi):
+                    maxi = temp
+                    ret = maxi
+                    alpha = max(alpha,maxi)
+                if(temp > beta):
+                    return temp
     #print("least bad move for turn ", calls, "val is", ret)
     return ret
 def get_move_minMax(baord,player):
     state = board.copy()
+    alpha = -1
+    beta = 1
     max = -1
     min = 1
     maxCols = [random.randint(1,size)]
     for col in state.columns:
         row = find_row(col, state)
         if(row > 0):
-            temp = move_helper_check(state, player, col, 1, min, max)
+            temp = move_helper_check(state, player, col, 1, alpha, beta)
             #print("best move for column: ",col, " is ",temp)
             if(player==2):
                 if(temp == max):
@@ -203,12 +211,10 @@ while not (win or check_tie(board)):
                     pos=pygame.mouse.get_pos()
                     column = find_column(pos)
                     if column not in board.columns: 
-                        print(column, "is not a valid column")
                         break
                     row = find_row(column, board)
                     #print(column)
                     if row not in board.index: 
-                        print(row, "is not a valid row")
                         break
                     #print(find_row(column))
                     board.loc[row,column] = player
