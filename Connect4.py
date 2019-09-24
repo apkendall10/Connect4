@@ -3,6 +3,7 @@ pygame.init
 size = width, height = 600, 480
 white= 255,255,255
 screen = pygame.display.set_mode(size)
+file = open("gameoutput.txt","a") 
 size = 5
 win = 3
 pos=(0,0)
@@ -86,11 +87,11 @@ def check_win(board,player):
                                 return True
     return False
 def print_board(board):
+    val = ""
     for row in board.index:
-        val = ""
         for col in board.columns:
-            val = val + str(board.loc[row, col]) + " "
-        print(val)
+            val = val + str(board.loc[row, col]) + ","
+    return val
 
 def move_helper_check(board,player,column, calls):
     state = board.copy()
@@ -106,7 +107,7 @@ def move_helper_check(board,player,column, calls):
     return move_helper_add(state, 3 - player , calls+1)
 
 def move_helper_add(board, player, calls):
-    if(calls > 6):
+    if(calls > 5):
         return 0
     state = board.copy()
     max = -1
@@ -127,8 +128,7 @@ def move_helper_add(board, player, calls):
                     ret = max
     #print("least bad move for turn ", calls, "val is", ret)
     return ret
-
-def get_move(board,player):
+def get_move_minMax(baord,player):
     state = board.copy()
     max = -1
     min = 1
@@ -152,6 +152,8 @@ def get_move(board,player):
                     min = temp 
     return maxCols[random.randint(1,size) % len(maxCols)]
 
+def get_move(board,player):
+    return get_move_minMax(board,player)
 
 class button:
     def __init__(self,pos,name,color,screen,size=(80,50)):
@@ -187,10 +189,11 @@ while numPlayers==-1:
 
 screen.fill(blue)
 draw_board(board)
-
+gameStates = []
+turnCount = 0
 player=random.randint(1,2)
 win = False
-while not win:
+while not (win or check_tie(board)):
         pygame.display.flip()
         for event in pygame.event.get():
             pygame.display.flip()
@@ -213,6 +216,8 @@ while not win:
                     add_piece(row, column, player)
                     win = check_win(board, player)
                     #if(win): print("you win")
+                    turnCount = turnCount +1
+                    gameStates.append(print_board(board))
                     player = 3 - player
                     pygame.display.flip()
             else:
@@ -223,10 +228,19 @@ while not win:
                 board.loc[row,column] = player
                 add_piece(row, column, player)
                 win = check_win(board, player)
+                turnCount = turnCount +1
+                gameStates.append(print_board(board))
                 player = 3 - player
                 pygame.display.flip()
         pygame.display.flip()
-            
-
+player = 3 - player
+outcome = (player - 1.5) * 2
+if(check_tie(board)): outcome = 0
+counter = -1
+for state in gameStates:
+    counter = counter + 1
+    val = "\n" + state + str(outcome/(turnCount - counter))
+    file.write(val)   
+file.close()
 
 sys.exit()
