@@ -3,7 +3,8 @@ pygame.init
 size = width, height = 600, 480
 white= 255,255,255
 screen = pygame.display.set_mode(size)
-
+size = 5
+win = 3
 pos=(0,0)
 blue = (100,100,200)
 red = (200,100,100)
@@ -22,7 +23,7 @@ screen.fill(blue)
 pygame.font.init() # you have to call this at the start, 
                    # if you want to use this module.
 myfont = pygame.font.SysFont('Comic Sans MS', 10)
-board = pd.DataFrame(data = 0, index = range(1,7) , columns = range(1,8))
+board = pd.DataFrame(data = 0, index = range(1,size) , columns = range(1,size+1))
 
 def draw_circle(pos,color,r=20):
     x, y = pos
@@ -45,7 +46,7 @@ def find_column(pos):
     return round((x+30)/60)
 
 def find_row(column, board):
-    ret = 6
+    ret = size-1
     for i in board.index:
         if(board.loc[i,column]>0):
             return i-1
@@ -55,9 +56,9 @@ def check_helper(board, player, row, column, count, dir):
     x , y = dir
     newRow = row + x
     newColumn = column + y
-    if(newRow < 1 or newRow > 6):
+    if(newRow not in board.index):
         return False
-    if(newColumn < 1 or newColumn > 7):
+    if(newColumn not in board.columns):
         return False
     if(board.loc[newRow, newColumn] != player):
         return False
@@ -81,7 +82,7 @@ def check_win(board,player):
                     for y in (-1,0,1):
                         dir = (x,y)
                         if(dir != (0,0)):
-                            if(check_helper(board,player, row,column, 3, dir)):
+                            if(check_helper(board,player, row,column, 2, dir)):
                                 return True
     return False
 def print_board(board):
@@ -96,11 +97,11 @@ def move_helper_check(board,player,column, calls):
     row = find_row(column, state)
     state.loc[row,column]=player
     if(check_tie(state)):
-        print("Tie Reached")
+        #print("Tie Reached")
         return 0.0
     if(check_win(state,player)):
         #print_board(state)
-        print(player, " wins in " , calls)
+        #print(player, " wins in " , calls)
         return (player - 1.5) * 2 / calls
     return move_helper_add(state, 3 - player , calls+1)
 
@@ -124,25 +125,32 @@ def move_helper_add(board, player, calls):
                 if(temp > max):
                     max = temp
                     ret = max
-    print("least bad move for turn ", calls, "val is", ret)
+    #print("least bad move for turn ", calls, "val is", ret)
     return ret
 
-def get_move(board):
+def get_move(board,player):
     state = board.copy()
-    max = -.25
-    maxCol = random.randint(1,7)
-    test = maxCol
+    max = -1
+    min = 1
+    maxCols = [random.randint(1,size)]
     for col in state.columns:
         row = find_row(col, state)
         if(row > 0):
-            temp = move_helper_check(state, 2, col, 1)
-            print("best move for column: ",col, " is ",temp)
-            if(temp > max):
-                maxCol = col
-                max = temp
-    if(max==0):
-        maxCol = test
-    return maxCol
+            temp = move_helper_check(state, player, col, 1)
+            #print("best move for column: ",col, " is ",temp)
+            if(player==2):
+                if(temp == max):
+                    maxCols.append(col)
+                if(temp > max):
+                    maxCols = [col]
+                    max = temp
+            else:
+                if(temp == min):
+                    maxCols.append(col)
+                if(temp < min):
+                    maxCols = [col]
+                    min = temp 
+    return maxCols[random.randint(1,size) % len(maxCols)]
 
 
 class button:
@@ -157,12 +165,13 @@ class button:
     def has(self,pos):
         return self.tile.collidepoint(pos)
 
-player_1=button((0,0),"1 Player",blue,screen,(300,480))
-player_2=button((300,0),"2 Player",red,screen,(300,480))
+player_0=button((0,0),"0 Players",green,screen,(200,480))
+player_1=button((200,0),"1 Players",blue,screen,(200,480))
+player_2=button((400,0),"2 Players",red,screen,(200,480))
 #screen.fill(white)
-numPlayers=0
+numPlayers=-1
 
-while numPlayers==0:
+while numPlayers==-1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: 
             sys.exit()
@@ -172,12 +181,14 @@ while numPlayers==0:
                 numPlayers=1
             if player_2.has(pos):
                 numPlayers=2
+            if player_0.has(pos):
+                numPlayers=0
     pygame.display.flip()
 
 screen.fill(blue)
 draw_board(board)
 
-player=1
+player=random.randint(1,2)
 win = False
 while not win:
         pygame.display.flip()
@@ -185,15 +196,18 @@ while not win:
             pygame.display.flip()
             if event.type == pygame.QUIT: 
                 sys.exit()
-            if(player==1 or numPlayers == 2):
+            if(not numPlayers==0 and (player==1 or numPlayers == 2)):
                 if event.type == pygame.MOUSEBUTTONUP:
                     pos=pygame.mouse.get_pos()
                     column = find_column(pos)
-                    if column > 7: break
-                    if column < 1: break
+                    if column not in board.columns: 
+                        print(column, "is not a valid column")
+                        break
                     row = find_row(column, board)
                     #print(column)
-                    if row < 1: break
+                    if row not in board.index: 
+                        print(row, "is not a valid row")
+                        break
                     #print(find_row(column))
                     board.loc[row,column] = player
                     add_piece(row, column, player)
@@ -203,8 +217,8 @@ while not win:
                     pygame.display.flip()
             else:
                 row = -1
-                while(row < 1):
-                    column = get_move(board)
+                while(row not in board.index):
+                    column = get_move(board,player)
                     row = find_row(column, board)
                 board.loc[row,column] = player
                 add_piece(row, column, player)
