@@ -1,5 +1,8 @@
 import sys, pygame, numpy as np, random, pandas as pd, board, agent
 
+agentType = 1
+if(len(sys.argv) > 1 and not sys.argv[1].isalpha()):    
+    agentType = int(sys.argv[1])
 pygame.init
 size = width, height = 600, 480
 screen = pygame.display.set_mode(size)
@@ -18,7 +21,7 @@ colorMap = {
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 10)
 b = board.board(size)
-agent1 = agent.agent(1, size)
+agent1 = agent.agent(agentType, size)
 
 def draw_circle(pos,color,r=20):
     x, y = pos

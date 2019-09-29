@@ -1,4 +1,4 @@
-import numpy as np, random, pandas as pd, sklearn.neural_network, board
+import numpy as np, random, pandas as pd, sklearn.neural_network, board, time
 from sklearn.neural_network import MLPRegressor
 
 class agent:
@@ -18,14 +18,20 @@ class agent:
             self.train()
 
     def train(self):
+        #start = time.time()
         data = pd.read_csv("gameoutput.txt")
+        #end = time.time()
+        #print("reading data took", (end - start))
         target_col = self.game_size * (self.game_size -1) +2
         target = data["score"]
         target = np.array(target)
         target = target.astype('float32')
         features = data.iloc[:,range(0,target_col-1)]
         features = features.astype('float32')
+        #start = time.time()
         self.nn.fit(features, target)
+        #end = time.time()
+        #print("fitting data took", (end - start))
 
     
 
