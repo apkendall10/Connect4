@@ -11,7 +11,7 @@ class agent:
                             learning_rate='adaptive', 
                             max_iter=200, momentum=0.9, n_iter_no_change=10,
                             nesterovs_momentum=True, power_t=0.5,  random_state=1,
-                            solver='adam', tol=0.0001,
+                            solver='adam', tol=0.001,
                             validation_fraction=0.1, verbose=False, warm_start=False)
             self.train()
 

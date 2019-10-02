@@ -7,7 +7,7 @@ nn = MLPRegressor(activation='relu', early_stopping=True, hidden_layer_sizes=(42
         learning_rate='adaptive', 
         max_iter=200, momentum=0.9, n_iter_no_change=10,
         nesterovs_momentum=True, power_t=0.5,  random_state=1,
-        solver='adam', tol=0.0001,
+        solver='adam', tol=0.001,
         validation_fraction=0.1, verbose=True, warm_start=False)       
 
 data = pd.read_csv("gameoutput.txt")
