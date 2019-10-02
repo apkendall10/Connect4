@@ -6,16 +6,15 @@ class agent:
     def __init__(self, type, size):
         self.game_size = size
         self.ml = (type == 1)
-        if(self.ml):
-            self.nn = clf = MLPRegressor(activation='relu', alpha=1e-05, batch_size='auto',
-                    beta_1=0.9, beta_2=0.999, early_stopping=False,
-                    epsilon=1e-08, hidden_layer_sizes=(15,),
-                    learning_rate='constant', learning_rate_init=0.001,
-                    max_iter=200, momentum=0.9, n_iter_no_change=10,
-                    nesterovs_momentum=True, power_t=0.5,  random_state=1,
-                    shuffle=True, solver='lbfgs', tol=0.0001,
-                    validation_fraction=0.1, verbose=False, warm_start=False)
-            self.train()
+        self.nn = clf = MLPRegressor(activation='relu', alpha=1e-05, batch_size='auto',
+                beta_1=0.9, beta_2=0.999, early_stopping=False,
+                epsilon=1e-08, hidden_layer_sizes=(15,),
+                learning_rate='constant', learning_rate_init=0.001,
+                max_iter=200, momentum=0.9, n_iter_no_change=10,
+                nesterovs_momentum=True, power_t=0.5,  random_state=1,
+                shuffle=True, solver='lbfgs', tol=0.0001,
+                validation_fraction=0.1, verbose=False, warm_start=False)
+        self.train()
 
     def train(self):
         #start = time.time()
@@ -41,14 +40,12 @@ class agent:
         if(state.check_tie()):
             return 0.0
         if(state.check_win(player)):
-            return (player - 1.5) * 2 / calls
-        return self.move_helper_add(state, 3 - player , calls+1, alpha, beta)
+            return (player - 1.5) * 2
+        if(calls > 3):
+            return self.eval_board(state,player)
+        return self.move_helper_add(state, 3 - player , calls, alpha, beta)
 
     def move_helper_add(self, board, player, calls, alpha, beta):
-        if(calls > 3):
-            denom = board.count_near_win(3-player, 2)
-            if denom == 0: denom = 1
-            return (board.count_near_win(player, 2)/denom -1) * (player - 1.5)
         state = board.copy()
         maxi = -1
         mini = 1
@@ -57,7 +54,7 @@ class agent:
         for col in columns:
             row = state.find_row(col)
             if(row > 0):
-                temp = self.move_helper_check(state, player, col, calls, alpha, beta)
+                temp = self.move_helper_check(state, player, col, calls+1, alpha, beta)
                 if(player==1):
                     if(temp < mini):
                         mini = temp
@@ -98,6 +95,14 @@ class agent:
                     min = temp 
         return maxCols[random.randint(1,self.game_size) % len(maxCols)]
 
+    def eval_board(self, board, player):
+        vals = (board.print_board() + str(player)).split(',')
+        for s in vals:
+            s = float(s)
+        features = np.array(vals).astype(float).reshape(1,-1)
+        score = self.nn.predict(features)
+        return score
+
     def learn_move(self, board,player):
         min = 100
         max = -100
@@ -106,11 +111,7 @@ class agent:
         for col in columns:
             state = board.copy()
             state.do_move(col,player)
-            vals = (state.print_board() + str(player)).split(',')
-            for s in vals:
-                s = float(s)
-            features = np.array(vals).astype(float).reshape(1,-1)
-            score = self.nn.predict(features)
+            score = self.eval_board(state, player)
             if(player==1):
                 if(score < min):
                     min = score
