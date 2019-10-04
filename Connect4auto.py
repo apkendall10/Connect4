@@ -5,6 +5,7 @@ trainingstep = 100
 stayAwake = False
 agentType = 1
 timedBasedTraining = False
+fileName = "gamelog.txt"
 #check user input for these variables
 if(len(sys.argv) > 1 and not sys.argv[1].isalpha()):    
     trainingstep = int(sys.argv[1])
@@ -12,12 +13,14 @@ if(len(sys.argv) > 2 and sys.argv[2].isalpha()):
     timedBasedTraining = (sys.argv[2]=='T')
 if(len(sys.argv) > 3 and sys.argv[3].isalpha()):
     stayAwake = (sys.argv[3]=='awake')
+if(len(sys.argv) > 4 and sys.argv[4].isalpha()):
+    fileName = sys.argv[3]
 pyautogui.FAILSAFE = False
 
 #Initialize variables and objects=
-file = open("gameoutput.txt","a")
+file = open(fileName,"a")
 size = 7
-agent1 = agent.agent(agentType, size)
+agent1 = agent.agent(agentType, size, fileName)
 updatestep = (trainingstep / 10)
 updatestepsize = updatestep
 firstrun = False

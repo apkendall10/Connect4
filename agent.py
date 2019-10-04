@@ -3,7 +3,7 @@ from sklearn.neural_network import MLPRegressor
 
 class agent:
 
-    def __init__(self, type, size):
+    def __init__(self, type, size, file = "gameoutput.txt"):
         self.game_size = size
         self.ml = (type == 1)
         if(self.ml):
@@ -13,11 +13,17 @@ class agent:
                             nesterovs_momentum=True, power_t=0.5,  random_state=1,
                             solver='adam', tol=0.001,
                             validation_fraction=0.1, verbose=False, warm_start=False)
+            self.fileName = file
             self.train()
 
     def train(self):
         #start = time.time()
-        data = pd.read_csv("gameoutput.txt")
+        data = pd.read_csv(self.fileName)
+        for val in data['score']:
+            if val < 0:
+                val = -1
+            else:
+                val = 1
         #end = time.time()
         #print("reading data took", (end - start))
         target_col = self.game_size * (self.game_size -1) +2
@@ -99,6 +105,7 @@ class agent:
     def learn_move(self, board,player):
         min = 100
         max = -100
+        v = 0
         choice = 1
         columns = board.get_valid_columns()
         for col in columns:
@@ -113,10 +120,13 @@ class agent:
                 if(score < min):
                     min = score
                     choice = col
+                    v = min
             else:
                 if(score > max):
                     max = score
                     choice = col
+                    v = max
+        #print(v, choice, player)
         return choice
 
     def get_move(self, board, player):

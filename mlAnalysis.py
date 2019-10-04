@@ -10,7 +10,12 @@ nn = MLPRegressor(activation='relu', early_stopping=True, hidden_layer_sizes=(42
         solver='adam', tol=0.001,
         validation_fraction=0.1, verbose=True, warm_start=False)       
 
-data = pd.read_csv("gameoutput.txt")
+data = pd.read_csv("gamelog.txt")
+for val in data['score']:
+   if val < 0:
+        val = -1
+   else:
+       val = 1
 train, test = train_test_split(data, test_size=0.2)
 target_col = 44
 target = train["score"]

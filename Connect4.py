@@ -6,7 +6,8 @@ if(len(sys.argv) > 1 and not sys.argv[1].isalpha()):
 pygame.init
 size = width, height = 600, 480
 screen = pygame.display.set_mode(size)
-file = open("gameoutput.txt","a") 
+fileName = "gameoutput.txt"
+file = open(fileName,"a") 
 size = 7
 white = (255, 255, 255)
 blue = (100,100,200)
@@ -21,7 +22,7 @@ colorMap = {
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 10)
 b = board.board(size)
-agent1 = agent.agent(agentType, size)
+agent1 = agent.agent(agentType, size, fileName)
 
 def draw_circle(pos,color,r=20):
     x, y = pos
