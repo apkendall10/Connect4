@@ -131,7 +131,7 @@ class agent:
         if(self.agentType == 1):
             return self.learn_move(board,player)
         if(self.agentType == 2):
-            return self.monte_carlo_move(board, player)
+            return self.monte_carlo_move_explore(board, player)
         else:
             return self.get_move_minMax(board,player)
 
@@ -185,7 +185,7 @@ class agent:
         startBranch = [board,0,0,0]
         bestPath = []
         currentPlayer = player
-        for sim in range(1,50):
+        for sim in range(1,100):
             currentBranch = startBranch
             currentBoard = currentBranch[0]
             for step in bestPath:
@@ -222,12 +222,12 @@ class agent:
                 max = 0
                 if len(currentBranch) - 4 < len(columns): 
                     #print("not all explored")
-                    max = 1
+                    max = 1.5
                 #print("lenght of current branch", len(currentBranch))
                 for child in range(4, len(currentBranch)):
                     childLink = currentBranch[child]
                     childBranch = childLink[0]
-                    score = math.sqrt(math.log(sim)/childBranch[1])
+                    score = math.sqrt(math.log(sim)/childBranch[1])/100
                     score = childBranch[3] + score
                     if score >= max:
                         max = score
@@ -248,6 +248,7 @@ class agent:
             childLink = branch[child]
             column = childLink[1]
             usedCol.append(column)
+        #print("used columns",usedCol)
         targetCol = board.get_valid_columns()
         for col in targetCol:
             if col not in usedCol: validCol.append(col)
@@ -255,5 +256,7 @@ class agent:
         target = 0
         while(target <= pick):
             for col in validCol:
-                if target == pick: return col
+                if target == pick:
+                    #print("column", col) 
+                    return col
                 target = target + 1
