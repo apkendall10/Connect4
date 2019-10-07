@@ -6,7 +6,7 @@ if(len(sys.argv) > 1 and not sys.argv[1].isalpha()):
 pygame.init
 size = width, height = 600, 480
 screen = pygame.display.set_mode(size)
-fileName = "gameoutput.txt"
+fileName = "gamelog.txt"
 file = open(fileName,"a") 
 size = 7
 white = (255, 255, 255)
