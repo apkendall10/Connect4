@@ -6,7 +6,7 @@ class agent:
     def __init__(self, type, size, file = "gameoutput.txt"):
         self.game_size = size
         self.agentType = type
-        if(type == 1):# or type == 2):
+        if(type == 1 or type == 2):
             self.nn  = MLPRegressor(activation='relu', early_stopping=True, hidden_layer_sizes=(42,7),
                             learning_rate='adaptive', 
                             max_iter=200, momentum=0.9, n_iter_no_change=10,
@@ -136,14 +136,14 @@ class agent:
             return self.get_move_minMax(board,player)
 
     def simulate_move(self, board, player):
-        columns = board.get_valid_columns()
-        pick = random.randint(0,len(columns))
-        target = 0
-        while(target <= pick):
-            for col in columns:
-                if target == pick: return col
-                target = target + 1
-        #return self.learn_move(board, player)
+        #columns = board.get_valid_columns()
+        #pick = random.randint(0,len(columns))
+        #target = 0
+        #while(target <= pick):
+        #    for col in columns:
+        #        if target == pick: return col
+        #        target = target + 1
+        return self.learn_move(board, player)
 
     def simulate_game(self, startState, startPlayer):
         currentState = startState.copy()
