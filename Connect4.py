@@ -1,4 +1,4 @@
-import sys, pygame, numpy as np, random, pandas as pd, board, agent
+import sys, pygame, numpy as np, random, pandas as pd, board, agent, agentForest
 
 agentType = 1
 if(len(sys.argv) > 1 and not sys.argv[1].isalpha()):    
@@ -6,7 +6,7 @@ if(len(sys.argv) > 1 and not sys.argv[1].isalpha()):
 pygame.init
 size = width, height = 600, 480
 screen = pygame.display.set_mode(size)
-fileName = "gamelog.txt"
+fileName = "treelog.txt"
 file = open(fileName,"a") 
 size = 7
 white = (255, 255, 255)
@@ -22,7 +22,8 @@ colorMap = {
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 10)
 b = board.board(size)
-agent1 = agent.agent(agentType, size, fileName)
+#agent1 = agent.agent(agentType, size, fileName)
+agent1 = agentForest.agentForest(10, fileName)
 
 def draw_circle(pos,color,r=20):
     x, y = pos
@@ -97,7 +98,7 @@ for it in range(1,trainingstep+1):
                         break
                     moveDone = True          
             else:
-                column = agent1.get_move(b,player)
+                column = agent1.get_move(b,player,10)
                 if column not in b.get_valid_columns(): 
                         break
                 moveDone = True

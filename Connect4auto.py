@@ -1,14 +1,14 @@
-import  numpy as np, random, pandas as pd, board, agent, sys, pyautogui, time
+import  numpy as np, random, pandas as pd, board, agent, sys, pyautogui, time, agentForest
 
 #Set defaults for number of training runs and weather to keep the computer awake automatically
 trainingstep = 100
 stayAwake = False
 agentType = 1
 timedBasedTraining = False
-fileName = "gamelog.txt"
+fileName = "treelog.txt"
 #check user input for these variables
 if(len(sys.argv) > 1 and not sys.argv[1].isalpha()):    
-    trainingstep = int(sys.argv[1])
+    trainingstep = float(sys.argv[1])
 if(len(sys.argv) > 2 and sys.argv[2].isalpha()):
     timedBasedTraining = (sys.argv[2]=='T')
 if(len(sys.argv) > 3 and sys.argv[3].isalpha()):
@@ -17,34 +17,34 @@ if(len(sys.argv) > 4 and sys.argv[4].isalpha()):
     fileName = sys.argv[3]
 pyautogui.FAILSAFE = False
 
-#Initialize variables and objects=
-file = open(fileName,"a")
-size = 7
-agent1 = agent.agent(agentType, size, fileName)
-updatestep = (trainingstep / 10)
-updatestepsize = updatestep
-firstrun = False
-#iteratively run through the model
+#Initialize variables and objects
 start = time.time()
 currentTime = time.time() - start
+if timedBasedTraining: trainingstep = trainingstep * 3600
+file = open(fileName,"a")
+size = 7
+agent1 = agentForest.agentForest(10, fileName)
+updatestep = (trainingstep / 10)
+updatestepsize = updatestep
+#firstrun = False
+#iteratively run through the model
 currentstep = 1
 while((not timedBasedTraining and currentstep < trainingstep) or (timedBasedTraining and currentTime < trainingstep)):
     #set up game state for each model
     if((not timedBasedTraining and (currentstep % updatestep == 0)) or (timedBasedTraining and (currentTime > updatestep))):
         print(currentstep, currentTime)
         if(timedBasedTraining): updatestep = updatestep + updatestepsize
-    firstrun = not firstrun
-    if not firstrun: agent1.train()
+    #firstrun = not firstrun
+    #if not firstrun: agent1.train()
     b = board.board(size)
     gameStates = []
     turnCount = 0
-    if firstrun: startPlayer = random.randint(1,2)
-    else: startPlayer = 3 - startPlayer
+    startPlayer = random.randint(1,2)
     player = startPlayer
     win = False
     #run the model
     while not (win or b.check_tie()):
-        column = agent1.get_move(b,player)
+        column = agent1.get_move(b,player,5)
         if column not in b.get_valid_columns(): 
                 break
         row = b.find_row(column)
