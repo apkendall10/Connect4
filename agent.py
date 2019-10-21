@@ -19,11 +19,11 @@ class agent:
     def train(self):
         #start = time.time()
         data = pd.read_csv(self.fileName)
-        for val in data['score']:
-            if val < 0:
-                val = -1
-            else:
-                val = 1
+        #for val in data['score']:
+        #    if val < 0:
+        #        val = -1
+        #    else:
+        #        val = 1
         #end = time.time()
         #print("reading data took", (end - start))
         target_col = self.game_size * (self.game_size -1) +2
@@ -46,11 +46,30 @@ class agent:
             return 0.0
         if(state.check_win(player)):
             return (player - 1.5) * 2
-        if(calls > 3):
-            denom = board.count_near_win(3-player, 2)
-            if denom == 0: denom = 1
-            return (board.count_near_win(player, 2)/denom -1) * (player - 1.5)
+        if(calls > 1):
+            return self.static_board_eval(state,player)
         return self.move_helper_explore(state, 3 - player , calls, alpha, beta)
+
+    def static_board_eval(self, board, player):
+        count = 0
+        wins = 0
+        for sim in range(1,10):
+                count = count + 1
+                outcome = self.simulate_game(board, 3-player) 
+                if outcome == player:
+                    wins = wins + 1
+                elif outcome == 0:
+                    count = count - 1
+        return wins/count * (player - 1.5) * 2
+        #return self.monte_carlo_move(board, player, True) * (player - 1.5) * 2
+        #denom = state.count_near_win(3-player, 2)
+        #if denom == 0: denom = 1
+        #num = state.count_near_win(player, 2)
+        #if(denom < num):
+        #    return .5 * (player - 1.5)
+        #else: 
+        #    return -.5 * (player - 1.5)
+        #return (state.count_near_win(player, 3)/denom -1) 
 
     def move_helper_explore(self, board, player, calls, alpha, beta):
         state = board.copy()
@@ -158,7 +177,7 @@ class agent:
         else:
             return 0
 
-    def monte_carlo_move(self, board, player):
+    def monte_carlo_move(self, board, player, val = False):
         bestColumn = 0
         bestVal = -1
         for col in board.get_valid_columns():
@@ -166,7 +185,7 @@ class agent:
             state.do_move(col, player)
             count = 0
             wins = 0
-            for sim in range(1,20):
+            for sim in range(1,10):
                 count = count + 1
                 outcome = self.simulate_game(board, player) 
                 if outcome == player:
@@ -177,6 +196,7 @@ class agent:
                 bestVal = (wins/count)
                 bestColumn = col
         print(bestVal, bestColumn)
+        if(val): return bestVal
         return bestColumn
 
     def monte_carlo_move_explore(self, board, player):

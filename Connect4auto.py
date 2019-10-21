@@ -17,6 +17,8 @@ if(len(sys.argv) > 4 and sys.argv[4].isalpha()):
     fileName = sys.argv[3]
 pyautogui.FAILSAFE = False
 
+if timedBasedTraining: trainingstep = trainingstep * 3600
+
 #Initialize variables and objects=
 file = open(fileName,"a")
 size = 7

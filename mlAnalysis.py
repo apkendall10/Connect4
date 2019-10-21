@@ -3,7 +3,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from scipy import stats
-nn = MLPRegressor(activation='relu', early_stopping=True, hidden_layer_sizes=(42,7),
+nn = MLPRegressor(activation='relu', early_stopping=True, hidden_layer_sizes=(42,7,7,7),
         learning_rate='adaptive', 
         max_iter=200, momentum=0.9, n_iter_no_change=10,
         nesterovs_momentum=True, power_t=0.5,  random_state=1,
