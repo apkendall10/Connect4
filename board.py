@@ -82,5 +82,6 @@ class board:
             if(self.find_row(col)>0):
                 ret.append(col)
         return ret
+        
     def get_array(self):
         return self.board_data

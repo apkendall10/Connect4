@@ -1,24 +1,23 @@
-import numpy as np, random, pandas as pd, sklearn.neural_network, board, time, math
+import numpy as np, random, pandas as pd, sklearn.neural_network, board, time, math, agentForest
 from sklearn.neural_network import MLPRegressor
 
 class agent:
 
-    def __init__(self, type, size, file = "gameoutput.txt"):
+    def __init__(self, type, size, dataSet):
         self.game_size = size
         self.agentType = type
-        if(type == 1):# or type == 2):
+        if(type == 1 or type == 2):
             self.nn  = MLPRegressor(activation='relu', early_stopping=True, hidden_layer_sizes=(42,7),
                             learning_rate='adaptive', 
                             max_iter=200, momentum=0.9, n_iter_no_change=10,
                             nesterovs_momentum=True, power_t=0.5,  random_state=1,
                             solver='adam', tol=0.001,
                             validation_fraction=0.1, verbose=False, warm_start=False)
-            self.fileName = file
+            self.data = dataSet
             self.train()
 
     def train(self):
         #start = time.time()
-        data = pd.read_csv(self.fileName)
         #for val in data['score']:
         #    if val < 0:
         #        val = -1
@@ -27,10 +26,10 @@ class agent:
         #end = time.time()
         #print("reading data took", (end - start))
         target_col = self.game_size * (self.game_size -1) +2
-        target = data["score"]
+        target = self.data["score"]
         target = np.array(target)
         target = target.astype('float32')
-        features = data.iloc[:,range(0,target_col-1)]
+        features = self.data.iloc[:,range(0,target_col-1)]
         features = features.astype('float32')
         #start = time.time()
         self.nn.fit(features, target)
@@ -119,6 +118,13 @@ class agent:
                     min = temp 
         return maxCols[random.randint(1,self.game_size) % len(maxCols)]
 
+    def calc_nn_move(self, board, player):
+        vals = (board.print_board() + str(player)).split(',')
+        for s in vals:
+            s = float(s)
+        features = np.array(vals).astype(float).reshape(1,-1)
+        return self.nn.predict(features)
+
     def learn_move(self, board, player):
         min = 100
         max = -100
@@ -128,11 +134,7 @@ class agent:
         for col in columns:
             state = board.copy()
             state.do_move(col,player)
-            vals = (state.print_board() + str(player)).split(',')
-            for s in vals:
-                s = float(s)
-            features = np.array(vals).astype(float).reshape(1,-1)
-            score = self.nn.predict(features)
+            score = self.calc_nn_move(state, player)
             if(player==1):
                 if(score < min):
                     min = score
@@ -155,14 +157,14 @@ class agent:
             return self.get_move_minMax(board,player)
 
     def simulate_move(self, board, player):
-        columns = board.get_valid_columns()
-        pick = random.randint(0,len(columns))
-        target = 0
-        while(target <= pick):
-            for col in columns:
-                if target == pick: return col
-                target = target + 1
-        #return self.learn_move(board, player)
+        #columns = board.get_valid_columns()
+        #pick = random.randint(0,len(columns))
+        #target = 0
+        #while(target <= pick):
+        #    for col in columns:
+        #        if target == pick: return col
+        #        target = target + 1
+        return self.learn_move(board, player)
 
     def simulate_game(self, startState, startPlayer):
         currentState = startState.copy()
