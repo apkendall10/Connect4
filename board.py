@@ -85,3 +85,13 @@ class board:
         
     def get_array(self):
         return self.board_data
+
+    def setup_board(self, state, inverse = False):
+        idx = 0
+        for row in self.board_data.index:
+            for col in self.board_data.columns:
+                val = state[idx]
+                if inverse and not val == 0:
+                    val = 3 - val
+                self.set_loc(row,col,val)
+                idx = idx + 1

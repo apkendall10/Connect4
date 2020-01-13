@@ -6,7 +6,7 @@ if(len(sys.argv) > 1 and not sys.argv[1].isalpha()):
 pygame.init
 size = width, height = 600, 480
 screen = pygame.display.set_mode(size)
-fileName = "treelog.txt"
+fileName = "cnnLog5.txt"
 file = open(fileName,"a") 
 size = 7
 white = (255, 255, 255)
@@ -15,15 +15,18 @@ red = (200,100,100)
 green = (100,200,100)
 black=(0,0,0)
 colorMap = {
-        0: white,
-        1: red,
-        2: black
-        }
+    0: white,
+    1: red,
+    2: black
+    }
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 10)
 b = board.board(size)
-#agent1 = agent.agent(agentType, size, fileName)
-agent1 = agentForest.agentForest(10, fileName)
+if(agentType==1):
+    agent1 = agentForest.agentForest(10, fileName, 2)
+else:
+    agent1 = agent.agent(agentType, size, fileName)
+
 
 def draw_circle(pos,color,r=20):
     x, y = pos
@@ -45,7 +48,7 @@ class button:
         self.tile=pygame.Rect(pos,size)
         pygame.draw.rect(screen,color,self.tile)
         pygame.draw.rect(screen,black,self.tile,3)
-        textsurface = myfont.render(name,False,black)
+        textsurface = myfont.render(name,False,white)
         x,y=self.tile.center
         x=x-len(name)*2.5
         screen.blit(textsurface,(x,y))
@@ -80,7 +83,7 @@ for it in range(1,trainingstep+1):
     display_board(b)
     gameStates = []
     turnCount = 0
-    startPlayer = random.randint(1,2)
+    startPlayer = 1 #random.randint(1,2)
     player = startPlayer
     win = False
     while not (win or b.check_tie()):
@@ -98,29 +101,48 @@ for it in range(1,trainingstep+1):
                         break
                     moveDone = True          
             else:
-                column = agent1.get_move(b,player,10)
+                if agentType == 1:
+                    column = agent1.get_move(b,player,5)
+                else:
+                    column = agent1.get_move(b,player)
                 if column not in b.get_valid_columns(): 
                         break
                 moveDone = True
             if(moveDone):
                 row = b.find_row(column)
+                gameStates.append(b.print_board())
                 b.do_move(column, player)
                 display_piece(row, column, player)
                 win = b.check_win(player)
                 turnCount = turnCount +1
-                gameStates.append(b.print_board())
+                
                 player = 3 - player
+                break
         pygame.display.flip()
     player = 3 - player
+    gameStates.append(b.print_board())
     outcome = (player - 1.5) * 2
     if(b.check_tie()): outcome = 0
     counter = -1
     player = startPlayer
     for state in gameStates:
         counter = counter + 1
-        val = "\n" + state + str(player) + "," + str(outcome/(turnCount - counter))
+        val = "\n" + state + str(player) + "," + str(outcome)
         file.write(val)   
-        player = 3- player
+        player = 3 - player
 file.close()
+
+#player = 3 - player
+final=button((200,220),"Player " + str(player) + " wins",colorMap[player],screen,(200,40))
+pygame.display.flip()
+
+done = False
+while not done:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT: 
+            sys.exit()
+        if event.type == pygame.MOUSEBUTTONUP:
+            done = True
+
 
 sys.exit()

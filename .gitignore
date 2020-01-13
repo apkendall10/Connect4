@@ -1,0 +1,5 @@
+logBackUp
+*.txt
+!header.txt
+__pycache__
+Old

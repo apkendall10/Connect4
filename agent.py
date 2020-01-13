@@ -1,42 +1,57 @@
 import numpy as np, random, pandas as pd, sklearn.neural_network, board, time, math, agentForest
 from sklearn.neural_network import MLPRegressor
+from joblib import load, dump
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout
+#from tensorflow.python import keras.models.Sequential
+#from tensorflow.python import keras.layers.Dense
 
 class agent:
 
-    def __init__(self, type, size, dataSet):
+    def __init__(self, agentTypeInput, size, dataSet, fileName = "Agent JobLib/cnnAgent.joblib"):
         self.game_size = size
-        self.agentType = type
-        if(type == 1 or type == 2):
-            self.nn  = MLPRegressor(activation='relu', early_stopping=True, hidden_layer_sizes=(42,7),
-                            learning_rate='adaptive', 
-                            max_iter=200, momentum=0.9, n_iter_no_change=10,
-                            nesterovs_momentum=True, power_t=0.5,  random_state=1,
-                            solver='adam', tol=0.001,
-                            validation_fraction=0.1, verbose=False, warm_start=False)
-            self.data = dataSet
-            self.train()
+        self.agentType = agentTypeInput
+        if(self.agentType == 1):
+            self.nn  = self.build_model()
+            self.train(dataSet,fileName)
+        elif(self.agentType==2):
+            self.nn = load("Agent JobLib/cnnAgent.joblib")
+            print("loading cnnAgent.joblib")
+        else:
+            print("loading " + fileName)
+            self.nn = load(fileName)
+        if(self.agentType == 4): self.forest = agentForest.agentForest(10, "nullFile", 2)
 
-    def train(self):
-        #start = time.time()
-        #for val in data['score']:
-        #    if val < 0:
-        #        val = -1
-        #    else:
-        #        val = 1
-        #end = time.time()
-        #print("reading data took", (end - start))
-        target_col = self.game_size * (self.game_size -1) +2
-        target = self.data["score"]
-        target = np.array(target)
-        target = target.astype('float32')
-        features = self.data.iloc[:,range(0,target_col-1)]
-        features = features.astype('float32')
-        #start = time.time()
-        self.nn.fit(features, target)
-        #end = time.time()
-        #print("fitting data took", (end - start))
+    def build_model(self):
+        model = Sequential()
+        model.add(Conv2D(filters=20, kernel_size = (2,2), strides = (1,1), input_shape=(6,7,1)))
+        #model.add(MaxPooling2D(strides = (1,1)))
+        model.add(Dropout(0.25))
+        model.add(Conv2D(filters=10, kernel_size = (2,2), strides = (1,1)))
+        model.add(Dropout(0.25))
+        model.add(Conv2D(filters=10, kernel_size = (2,2), strides = (1,1)))
+        model.add(Dropout(0.25))
+        model.add(Conv2D(filters=10, kernel_size = (2,2), strides = (1,1)))
+        model.add(Dropout(0.25))
+        #model.add(MaxPooling2D(strides = (1,1)))
+        model.add(Dense(units=7, activation='relu'))
+        model.add(Dense(units=7, activation='relu'))
+        model.add(Dense(units=7, activation='relu'))
+        model.add(Dense(units=7, activation='relu'))
+        model.add(Flatten())
+        model.add(Dense(1, activation='sigmoid'))
+        model.compile(loss='binary_crossentropy',
+                    optimizer='sgd',
+                    metrics=['accuracy'])
+        return model
 
-    
+    def train(self, data, fileName):
+        Y = data['score'].astype('int')
+        X = np.array(data.iloc[:,range(0,42)]).reshape(len(data),6,7,1)
+        self.nn.fit(X, Y,epochs = 1, batch_size = 100)
+        dump(self.nn,fileName)
+        print("writing " + fileName)
+           
 
     def move_helper_check(self,board,player,column, calls, alpha, beta):
         state = board.copy()
@@ -45,30 +60,16 @@ class agent:
             return 0.0
         if(state.check_win(player)):
             return (player - 1.5) * 2
-        if(calls > 1):
+        if(calls > 2):
             return self.static_board_eval(state,player)
         return self.move_helper_explore(state, 3 - player , calls, alpha, beta)
 
     def static_board_eval(self, board, player):
-        count = 0
-        wins = 0
-        for sim in range(1,10):
-                count = count + 1
-                outcome = self.simulate_game(board, 3-player) 
-                if outcome == player:
-                    wins = wins + 1
-                elif outcome == 0:
-                    count = count - 1
-        return wins/count * (player - 1.5) * 2
-        #return self.monte_carlo_move(board, player, True) * (player - 1.5) * 2
-        #denom = state.count_near_win(3-player, 2)
-        #if denom == 0: denom = 1
-        #num = state.count_near_win(player, 2)
-        #if(denom < num):
-        #    return .5 * (player - 1.5)
-        #else: 
-        #    return -.5 * (player - 1.5)
-        #return (state.count_near_win(player, 3)/denom -1) 
+        if self.agentType == 3:
+            return self.calc_nn_move(board,player)
+        else:
+            return self.forest.evaluate_board(board, player)
+        
 
     def move_helper_explore(self, board, player, calls, alpha, beta):
         state = board.copy()
@@ -78,6 +79,7 @@ class agent:
         columns = state.get_valid_columns()
         for col in columns:
             temp = self.move_helper_check(state, player, col, calls+1, alpha, beta)
+            #print(temp, calls, player)
             if(player==1):
                 if(temp < mini):
                     mini = temp
@@ -119,11 +121,12 @@ class agent:
         return maxCols[random.randint(1,self.game_size) % len(maxCols)]
 
     def calc_nn_move(self, board, player):
-        vals = (board.print_board() + str(player)).split(',')
-        for s in vals:
-            s = float(s)
-        features = np.array(vals).astype(float).reshape(1,-1)
-        return self.nn.predict(features)
+        val = board.print_board()
+        val = val[0:len(val)-1] 
+        vals = val.split(',')
+        features = np.array(vals).astype(float)
+        features = features.reshape(1,6,7,1)
+        return self.nn.predict(features)[0]
 
     def learn_move(self, board, player):
         min = 100
@@ -149,136 +152,8 @@ class agent:
         return choice
 
     def get_move(self, board, player):
-        if(self.agentType == 1):
+        if(self.agentType == 3 or self.agentType == 4):
+            return self.get_move_minMax(board,player)  
+        else:
             return self.learn_move(board,player)
-        if(self.agentType == 2):
-            return self.monte_carlo_move_explore(board, player)
-        else:
-            return self.get_move_minMax(board,player)
-
-    def simulate_move(self, board, player):
-        #columns = board.get_valid_columns()
-        #pick = random.randint(0,len(columns))
-        #target = 0
-        #while(target <= pick):
-        #    for col in columns:
-        #        if target == pick: return col
-        #        target = target + 1
-        return self.learn_move(board, player)
-
-    def simulate_game(self, startState, startPlayer):
-        currentState = startState.copy()
-        currentPlayer = startPlayer
-        while(not(currentState.check_win(currentPlayer) or currentState.check_tie())):
-            currentPlayer = 3 - currentPlayer
-            col = self.simulate_move(currentState, currentPlayer)
-            currentState.do_move(col, currentPlayer)
-        if(currentState.check_win(currentPlayer)):
-            #print("Win",currentState.print_board(),currentPlayer)
-            return currentPlayer
-        else:
-            return 0
-
-    def monte_carlo_move(self, board, player, val = False):
-        bestColumn = 0
-        bestVal = -1
-        for col in board.get_valid_columns():
-            state = board.copy()
-            state.do_move(col, player)
-            count = 0
-            wins = 0
-            for sim in range(1,10):
-                count = count + 1
-                outcome = self.simulate_game(board, player) 
-                if outcome == player:
-                    wins = wins + 1
-                elif outcome == 0:
-                    count = count - 1
-            if((wins/count) > bestVal):
-                bestVal = (wins/count)
-                bestColumn = col
-        print(bestVal, bestColumn)
-        if(val): return bestVal
-        return bestColumn
-
-    def monte_carlo_move_explore(self, board, player):
-        bestColumn = 0
-        bestVal = -1
-        startBranch = [board,0,0,0]
-        bestPath = []
-        currentPlayer = player
-        for sim in range(1,100):
-            currentBranch = startBranch
-            currentBoard = currentBranch[0]
-            for step in bestPath:
-                currentBranch = currentBranch[step][0]
-                currentBoard = currentBranch[0]
-                currentPlayer = 3 - currentPlayer
-            column = self.get_next_monte(currentBoard,currentPlayer,currentBranch)
-            newBoard = currentBoard.copy()
-            newBoard.do_move(column, currentPlayer)
-            outcome = self.simulate_game(newBoard, player)
-            count = 1
-            win = 0
-            if outcome == player:
-                win = 1
-            newState = [newBoard, count, win, win / count]
-            currentBranch.append((newState, column))
-            currentBranch = startBranch
-            currentBranch[1] = currentBranch[1] + count
-            currentBranch[2] = currentBranch[2] + win
-            currentBranch[3] = currentBranch[2] / currentBranch[1]
-            for step in bestPath:
-                currentBranch = currentBranch[step][0]
-                #print("currentBranch[1]",currentBranch[1])
-                currentBranch[1] = currentBranch[1] + count
-                currentBranch[2] = currentBranch[2] + win
-                currentBranch[3] = currentBranch[2] / currentBranch[1]
-            bestPath = []
-            currentBranch = startBranch
-            currentPlayer = player
-            while len(currentBranch) > 4:
-                currentBoard = currentBranch[0]
-                columns = currentBoard.get_valid_columns()
-                bestChild = 0
-                max = 0
-                if len(currentBranch) - 4 < len(columns): 
-                    #print("not all explored")
-                    max = 1.5
-                #print("lenght of current branch", len(currentBranch))
-                for child in range(4, len(currentBranch)):
-                    childLink = currentBranch[child]
-                    childBranch = childLink[0]
-                    score = math.sqrt(math.log(sim)/childBranch[1])/100
-                    score = childBranch[3] + score
-                    if score >= max:
-                        max = score
-                        bestChild = child
-                if bestChild == 0: break
-                #print("best child",bestChild)
-                bestPath.append(bestChild)
-                currentLink = currentBranch[bestChild]
-                currentBranch = currentLink[0]
-                currentPlayer = 3 - currentPlayer
-        print(startBranch[3], len(bestPath))
-        return startBranch[bestPath[0]][1]
-
-    def get_next_monte(self, board, player, branch):
-        usedCol = []
-        validCol = []
-        for child in range(4, len(branch)):
-            childLink = branch[child]
-            column = childLink[1]
-            usedCol.append(column)
-        #print("used columns",usedCol)
-        targetCol = board.get_valid_columns()
-        for col in targetCol:
-            if col not in usedCol: validCol.append(col)
-        pick = random.randint(0,len(validCol))
-        target = 0
-        while(target <= pick):
-            for col in validCol:
-                if target == pick:
-                    #print("column", col) 
-                    return col
-                target = target + 1
+            
