@@ -60,7 +60,7 @@ class agent:
             return 0.0
         if(state.check_win(player)):
             return (player - 1.5) * 2
-        if(calls > 2):
+        if(calls > 1):
             return self.static_board_eval(state,player)
         return self.move_helper_explore(state, 3 - player , calls, alpha, beta)
 
