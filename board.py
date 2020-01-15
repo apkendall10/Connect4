@@ -37,8 +37,8 @@ class board:
         for row in self.board_data.index:
             for column in self.board_data.columns:
                 if(self.board_data.loc[row, column]==player):
-                    for x in (-1, 0, 1):
-                        for y in (-1,0,1):
+                    for x in (0, 1):
+                        for y in (0,1):
                             dir = (x,y)
                             if(dir != (0,0)):
                                 count = count + self.check_helper(player, row,column, length, dir)
