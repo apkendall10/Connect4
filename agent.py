@@ -6,13 +6,23 @@ from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout
 #from tensorflow.python import keras.models.Sequential
 #from tensorflow.python import keras.layers.Dense
 
+#agent types:
+#   1. retrain single SBE
+#   2. single SBE
+#   3. single min-max with SBE
+#   4. min-max with multi-agent SBE
+#   5. retrain next move predictor
+#   6. next move predictor
+
 class agent:
 
     def __init__(self, agentTypeInput, size, dataSet, fileName = "Agent JobLib/cnnAgent.joblib"):
         print("Creating agent")
         self.game_size = size
         self.agentType = agentTypeInput
-        if(self.agentType == 1):
+        if self.agentType == 6:
+            fileName = "Agent JobLib/moveAgent.joblib"
+        if(self.agentType == 1 or self.agentType == 5):
             self.nn  = self.build_model()
             self.train(dataSet,fileName)
         else:
@@ -21,15 +31,21 @@ class agent:
         if(self.agentType == 4): self.forest = agentForest.agentForest(10, "nullFile", 2)
 
     def build_model(self):
+        if self.agentType == 1:
+            outerLayer = 1
+            lossFunc = 'sigmoid'
+        else:
+            outerLayer = 7
+            lossFunc = 'categorical_crossentropy'
         model = Sequential()
-        model.add(Conv2D(filters=20, kernel_size = (2,2), strides = (1,1), input_shape=(6,7,1)))
+        model.add(Conv2D(filters=10, kernel_size = (2,2), strides = (1,1), input_shape=(6,7,1)))
         #model.add(MaxPooling2D(strides = (1,1)))
         #model.add(Dropout(0.25))
-        model.add(Conv2D(filters=10, kernel_size = (2,2), strides = (1,1)))
+        model.add(Conv2D(filters=20, kernel_size = (2,2), strides = (1,1)))
         #model.add(Dropout(0.25))
-        model.add(Conv2D(filters=10, kernel_size = (2,2), strides = (1,1)))
+        model.add(Conv2D(filters=30, kernel_size = (2,2), strides = (1,1)))
         #model.add(Dropout(0.25))
-        model.add(Conv2D(filters=10, kernel_size = (2,2), strides = (1,1)))
+        model.add(Conv2D(filters=40, kernel_size = (2,2), strides = (1,1)))
         #model.add(Dropout(0.25))
         #model.add(MaxPooling2D(strides = (1,1)))
         model.add(Dense(units=7, activation='relu'))
@@ -37,14 +53,17 @@ class agent:
         model.add(Dense(units=7, activation='relu'))
         model.add(Dense(units=7, activation='relu'))
         model.add(Flatten())
-        model.add(Dense(1, activation='sigmoid'))
-        model.compile(loss='binary_crossentropy',
+        model.add(Dense(outerLayer, activation='sigmoid'))
+        model.compile(loss=lossFunc,
                     optimizer='sgd',
                     metrics=['accuracy'])
         return model
 
     def train(self, data, fileName):
-        Y = data['score'].astype('int')
+        if self.agentType == 1:
+            Y = data['score'].astype('int')
+        else:
+            Y = keras.utils.to_categorical(np.array(data['next move'])-1, num_classes = 7)
         X = np.array(data.iloc[:,range(0,42)]).reshape(len(data),6,7,1)
         self.nn.fit(X, Y,epochs = 1, batch_size = 100)
         dump(self.nn,fileName)
@@ -149,9 +168,21 @@ class agent:
         #print(v, choice, player)
         return choice
 
+    def learn_next_move(self, board, player):
+        val = board.print_board()
+        val = val[0:len(val)-1] 
+        vals = val.split(',')
+        sample = np.array(vals).astype(float)
+        sample = sample.reshape(1,6,7,1)
+        print(np.argmax(self.nn.predict(sample)[0]))
+        return np.argmax(self.nn.predict(sample)[0])
+
+
     def get_move(self, board, player):
         if(self.agentType == 3 or self.agentType == 4):
-            return self.get_move_minMax(board,player)  
+            return self.get_move_minMax(board,player)
+        elif(self.agentType == 5 or self.agentType == 6):
+            return self.learn_next_move(board, player) + 1
         else:
             return self.learn_move(board,player)
             

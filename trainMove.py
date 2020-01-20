@@ -8,7 +8,7 @@ import keras
 
 
 #Set defaults for number of training runs and weather to keep the computer awake automatically
-inputFile = "moveLearner.txt"
+inputFile = "moveTrainer.txt"
 
 data = pd.read_csv(inputFile)
 
@@ -37,9 +37,9 @@ model.compile(loss='categorical_crossentropy',
               optimizer='sgd',
               metrics=['accuracy'])
 
-model.fit(X.reshape(len(data),6,7,1), Y, epochs = 4, batch_size = 100)
-dump(model, 'Agent JobLib/moveAgent.joblib') 
-#model = load('Agent JobLib/cnnAgent.joblib')
+#model.fit(X.reshape(len(data),6,7,1), Y, epochs = 4, batch_size = 100)
+#dump(model, 'Agent JobLib/moveAgent.joblib') 
+model = load('Agent JobLib/moveAgent.joblib')
 
 choices = range(0,len(data))
 print(np.shape(choices))
@@ -48,4 +48,5 @@ for cycle in range(0,30):
     state = X[row]
     player = players[row]
     print(state.reshape(6,7,))
-    print(model.predict(state.reshape(1,6,7,1)),player,Y[row])
+    prediction = model.predict(state.reshape(1,6,7,1))[0]
+    print(np.argmax(prediction),player,Y[row])

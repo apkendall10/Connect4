@@ -27,7 +27,7 @@ if(agentType==1):
 else:
     agent1 = agent.agent(agentType, size, fileName)
 
-agent2 = agent.agent(3, size, fileName, "Agent JobLib/cnnAgent2.joblib")
+agent2 = agent1 #agent.agent(3, size, fileName, "Agent JobLib/cnnAgent2.joblib")
 
 def draw_circle(pos,color,r=20):
     x, y = pos
