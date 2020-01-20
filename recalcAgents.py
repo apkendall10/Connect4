@@ -6,4 +6,4 @@ fileName = "gamedata.txt"
 if(len(sys.argv) > 1):
     fileName = sys.argv[1]
 
-agent1 = agentForest.agentForest(10, fileName, 1)
+agent1 = agentForest.agentForest(5, fileName, 1)

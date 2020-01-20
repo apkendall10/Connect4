@@ -27,6 +27,7 @@ if(agentType==1):
 else:
     agent1 = agent.agent(agentType, size, fileName)
 
+agent2 = agent.agent(3, size, fileName, "Agent JobLib/cnnAgent2.joblib")
 
 def draw_circle(pos,color,r=20):
     x, y = pos
@@ -77,7 +78,7 @@ while numPlayers==-1:
 screen.fill(blue)
 trainingstep = 1
 if (numPlayers==0):
-    trainingstep = 20
+    trainingstep = 3
 for it in range(1,trainingstep+1):
     b = board.board(size)
     display_board(b)
@@ -101,8 +102,8 @@ for it in range(1,trainingstep+1):
                         break
                     moveDone = True          
             else:
-                if agentType == 1:
-                    column = agent1.get_move(b,player,5)
+                if player == 2:
+                    column = agent2.get_move(b,player)
                 else:
                     column = agent1.get_move(b,player)
                 if column not in b.get_valid_columns(): 

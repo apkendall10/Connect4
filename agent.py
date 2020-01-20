@@ -9,14 +9,12 @@ from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout
 class agent:
 
     def __init__(self, agentTypeInput, size, dataSet, fileName = "Agent JobLib/cnnAgent.joblib"):
+        print("Creating agent")
         self.game_size = size
         self.agentType = agentTypeInput
         if(self.agentType == 1):
             self.nn  = self.build_model()
             self.train(dataSet,fileName)
-        elif(self.agentType==2):
-            self.nn = load("Agent JobLib/cnnAgent.joblib")
-            print("loading cnnAgent.joblib")
         else:
             print("loading " + fileName)
             self.nn = load(fileName)

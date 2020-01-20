@@ -7,7 +7,7 @@ from scipy import stats
 
 
 #Set defaults for number of training runs and weather to keep the computer awake automatically
-inputFile = "comboLog.txt"
+inputFile = "moveLearner.txt"
 
 data = pd.read_csv(inputFile)
 
@@ -46,7 +46,7 @@ model.compile(loss='binary_crossentropy',
               metrics=['accuracy'])
 
 model.fit(X.reshape(len(data),6,7,1), Y, epochs = 2, batch_size = 100)
-dump(model, 'Agent JobLib/cnnAgent.joblib') 
+dump(model, 'Agent JobLib/cnnAgent2.joblib') 
 #model = load('Agent JobLib/cnnAgent.joblib'
 
 choices = range(0,len(data))
