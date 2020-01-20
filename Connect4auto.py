@@ -5,7 +5,7 @@ trainingstep = 2
 stayAwake = False
 agentType = 1
 timedBasedTraining = False
-fileName = "rivalLog.txt"
+fileName = "moveLearner.txt"
 recalc = False
 #check user input for these variables
 if(len(sys.argv) > 1 and not sys.argv[1].isalpha()):    

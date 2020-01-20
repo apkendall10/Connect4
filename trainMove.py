@@ -8,7 +8,7 @@ import keras
 
 
 #Set defaults for number of training runs and weather to keep the computer awake automatically
-inputFile = "moveTrainer.txt"
+inputFile = "moveLearner.txt"
 
 data = pd.read_csv(inputFile)
 
@@ -37,7 +37,7 @@ model.compile(loss='categorical_crossentropy',
               optimizer='sgd',
               metrics=['accuracy'])
 
-model.fit(X.reshape(len(data),6,7,1), Y, epochs = 2, batch_size = 100)
+model.fit(X.reshape(len(data),6,7,1), Y, epochs = 4, batch_size = 100)
 dump(model, 'Agent JobLib/moveAgent.joblib') 
 #model = load('Agent JobLib/cnnAgent.joblib')
 
