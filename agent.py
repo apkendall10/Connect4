@@ -3,6 +3,7 @@ from sklearn.neural_network import MLPRegressor
 from joblib import load, dump
 from keras.models import Sequential
 from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout
+import keras
 #from tensorflow.python import keras.models.Sequential
 #from tensorflow.python import keras.layers.Dense
 
@@ -13,6 +14,7 @@ from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout
 #   4. min-max with multi-agent SBE
 #   5. retrain next move predictor
 #   6. next move predictor
+#   7. monte_carlo
 
 class agent:
 
@@ -20,7 +22,7 @@ class agent:
         print("Creating agent")
         self.game_size = size
         self.agentType = agentTypeInput
-        if self.agentType == 6:
+        if self.agentType == 6 or self.agentType == 7:
             fileName = "Agent JobLib/moveAgent.joblib"
         if(self.agentType == 1 or self.agentType == 5):
             self.nn  = self.build_model()
@@ -29,6 +31,7 @@ class agent:
             print("loading " + fileName)
             self.nn = load(fileName)
         if(self.agentType == 4): self.forest = agentForest.agentForest(10, "nullFile", 2)
+        if(self.agentType == 7): self.forest = agentForest.agentForest(10, "nullFile", 6)
 
     def build_model(self):
         if self.agentType == 1:
@@ -169,13 +172,47 @@ class agent:
         return choice
 
     def learn_next_move(self, board, player):
+        cols = np.array(board.get_valid_columns()) - 1
         val = board.print_board()
         val = val[0:len(val)-1] 
         vals = val.split(',')
         sample = np.array(vals).astype(float)
         sample = sample.reshape(1,6,7,1)
-        print(np.argmax(self.nn.predict(sample)[0]))
-        return np.argmax(self.nn.predict(sample)[0])
+        prediction = self.nn.predict(sample)[0]
+        prediction = prediction[cols]
+        return cols[np.argmax(prediction)]
+
+    def monte_carlo(self, board, player):
+        min = 100
+        max = -100
+        choice = 1
+        columns = board.get_valid_columns()
+        for col in columns:
+            #print("column" , col)
+            state = board.copy()
+            state.do_move(col,player)
+            score = self.simulate_game(state, player)
+            #print(score)
+            if(player==1):
+                if(score < min):
+                    min = score
+                    choice = col
+            else:
+                if(score > max):
+                    max = score
+                    choice = col
+        #print(v, choice, player)
+        return choice
+
+    def simulate_game(self, board, player):
+        state = board.copy()
+        currentPlayer = player
+        while (not (state.check_win(currentPlayer) or state.check_tie())):
+            currentPlayer = 3 - currentPlayer
+            move = self.forest.get_learned_move(board, player)
+            #print(currentPlayer, move)
+            state.do_move(move,currentPlayer)
+        return 2 * (1.5 - currentPlayer)
 
 
     def get_move(self, board, player):
@@ -183,6 +220,8 @@ class agent:
             return self.get_move_minMax(board,player)
         elif(self.agentType == 5 or self.agentType == 6):
             return self.learn_next_move(board, player) + 1
+        elif(self.agentType == 7):
+            return self.monte_carlo(board, player)
         else:
             return self.learn_move(board,player)
             
