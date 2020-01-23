@@ -10,7 +10,7 @@ import keras
 #Set defaults for number of training runs and weather to keep the computer awake automatically
 inputFile = "moveTrainer.txt"
 
-data = pd.read_csv(inputFile)
+data = pd.read_csv(inputFile).dropna()
 
 
 
