@@ -23,7 +23,8 @@ class agent:
         self.game_size = size
         self.agentType = agentTypeInput
         if self.agentType == 6 or self.agentType == 7:
-            fileName = "Agent JobLib/moveAgent.joblib"
+            if fileName == "Agent JobLib/cnnAgent.joblib":
+                fileName = "Agent JobLib/moveAgent.joblib"
         if(self.agentType == 1 or self.agentType == 5):
             self.nn  = self.build_model()
             self.train(dataSet,fileName)
@@ -31,7 +32,7 @@ class agent:
             print("loading " + fileName)
             self.nn = load(fileName)
         if(self.agentType == 4): self.forest = agentForest.agentForest(10, "nullFile", 2)
-        if(self.agentType == 7): self.forest = agentForest.agentForest(10, "nullFile", 6)
+        if(self.agentType == 7): self.forest = agentForest.agentForest(2, "nullFile", 6)
 
     def build_model(self):
         if self.agentType == 1:
@@ -68,7 +69,7 @@ class agent:
         else:
             Y = keras.utils.to_categorical(np.array(data['next move'])-1, num_classes = 7)
         X = np.array(data.iloc[:,range(0,42)]).reshape(len(data),6,7,1)
-        self.nn.fit(X, Y,epochs = 1, batch_size = 100)
+        self.nn.fit(X, Y,epochs = 3, batch_size = 30)
         dump(self.nn,fileName)
         print("writing " + fileName)
            
@@ -189,9 +190,11 @@ class agent:
         columns = board.get_valid_columns()
         for col in columns:
             #print("column" , col)
-            state = board.copy()
-            state.do_move(col,player)
-            score = self.simulate_game(state, player)
+            score = 0
+            for rep in range(0,5):
+                state = board.copy()
+                state.do_move(col,player)
+                score = score + self.simulate_game(state, player)
             #print(score)
             if(player==1):
                 if(score < min):
@@ -209,7 +212,7 @@ class agent:
         currentPlayer = player
         while (not (state.check_win(currentPlayer) or state.check_tie())):
             currentPlayer = 3 - currentPlayer
-            move = self.forest.get_learned_move(board, player)
+            move = self.forest.get_learned_move(state, player)
             #print(currentPlayer, move)
             state.do_move(move,currentPlayer)
         return 2 * (1.5 - currentPlayer)

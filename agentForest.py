@@ -21,7 +21,7 @@ class agentForest:
         self.fileName = file
         self.agentList = []
         if agentType == 1 or agentType == 5:
-            data = pd.read_csv(self.fileName)
+            data = pd.read_csv(self.fileName).dropna()
             data['score'] = data['score'].apply(lambda x: 0 if x < 0 else 1)
             data = data.sample(frac=1).reset_index(drop=True)
             dataSet = np.array_split(data, self.k)
